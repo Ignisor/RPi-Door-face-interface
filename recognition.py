@@ -50,5 +50,5 @@ while True:
             first_match_index = matches.index(True)
             name = known_faces_names[first_match_index]
 
-        print("Opening door for {}!".format(name))
-        open_door()
+            print("Opening door for {}!".format(name))
+            open_door()

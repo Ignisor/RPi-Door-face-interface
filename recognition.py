@@ -10,6 +10,9 @@ import time
 DOOR_URL = 'http://door.gowombat.team/open/'
 
 
+logging.basicConfig(level=logging.INFO)
+
+
 def open_door():
     r = requests.post(DOOR_URL)
     if r.status_code == 200:

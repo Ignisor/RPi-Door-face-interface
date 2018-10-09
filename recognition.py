@@ -1,4 +1,5 @@
 import os
+import logging
 
 import face_recognition
 import picamera
@@ -26,21 +27,21 @@ output = np.empty((240, 320, 3), dtype=np.uint8)
 known_faces_names = []
 known_faces = []
 
-print("Loading known face image(s)")
+logging.info("Loading known face image(s)")
 for filename in os.listdir('known_faces'):
     filepath = 'known_faces/' + filename
     face_image = face_recognition.load_image_file(filepath)
     known_faces_names.append(filename.split('.')[0])
     known_faces.append(face_recognition.face_encodings(face_image)[0])
-    print("Loaded {}".format(filename.split('.')[0]))
+    logging.info("Loaded {}".format(filename.split('.')[0]))
 
 
 while True:
-    print("Capturing image.")
+    logging.info("Capturing image.")
     camera.capture(output, format="rgb")
 
     face_locations = face_recognition.face_locations(output)
-    print("Found {} faces in image.".format(len(face_locations)))
+    logging.info("Found {} faces in image.".format(len(face_locations)))
     face_encodings = face_recognition.face_encodings(output, face_locations)
 
     for face_encoding in face_encodings:
@@ -51,5 +52,5 @@ while True:
             first_match_index = matches.index(True)
             name = known_faces_names[first_match_index]
 
-            print("Opening door for {}!".format(name))
+            logging.info("Opening door for {}!".format(name))
             open_door()

@@ -30,7 +30,7 @@ print("Loading known face image(s)")
 for filename in os.listdir('known_faces'):
     filepath = 'known_faces/' + filename
     face_image = face_recognition.load_image_file(filepath)
-    known_faces_names.append(filename)
+    known_faces_names.append(filename.split('.')[0])
     known_faces.append(face_recognition.face_encodings(face_image)[0])
 
 

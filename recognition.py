@@ -10,7 +10,7 @@ import time
 DOOR_URL = 'http://door.gowombat.team/open/'
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 
 def open_door():

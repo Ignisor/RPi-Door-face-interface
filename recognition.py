@@ -36,7 +36,7 @@ def get_or_create_face_encoding(image_filename):
             logging.info("Saved encoding for {} is broken".format(filename.split('.')[0]))
             os.remove(encoding_filepath)
 
-    if not face_encoding:
+    if face_encoding is None:
         face_image = face_recognition.load_image_file(image_filepath)
         face_encoding = face_recognition.face_encodings(face_image)[0]
         logging.info("Created encoding for {}".format(filename.split('.')[0]))

@@ -28,8 +28,7 @@ def get_or_create_face_encoding(image_filename):
     encoding_filepath = 'known_encodings/' + os.path.splitext(image_filename)[0] + '.npy'
 
     if os.path.exists(encoding_filepath):
-        with open(encoding_filepath) as encoding_file:
-            face_encoding = np.load(encoding_file)
+        face_encoding = np.load(encoding_filepath)
 
         logging.info("Loaded saved encoding for {}".format(filename.split('.')[0]))
         return face_encoding
@@ -38,8 +37,7 @@ def get_or_create_face_encoding(image_filename):
     face_encoding = face_recognition.face_encodings(face_image)[0]
     logging.info("Created encoding for {}".format(filename.split('.')[0]))
 
-    with open(encoding_filepath, 'w') as encoding_file:
-        np.save(encoding_file, face_encoding)
+    np.save(encoding_filepath, face_encoding)
     logging.info("Saved encoding for {}".format(filename.split('.')[0]))
 
     return face_encoding

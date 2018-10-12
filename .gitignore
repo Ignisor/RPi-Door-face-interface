@@ -159,3 +159,6 @@ venv.bak/
 
 #DB
 db.sqlite3
+
+#encodings
+known_encodings/

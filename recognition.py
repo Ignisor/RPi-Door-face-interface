@@ -22,6 +22,29 @@ def open_door():
 
     time.sleep(1)
 
+
+def get_or_create_face_encoding(image_filename):
+    image_filepath = 'known_faces/' + image_filename
+    encoding_filepath = 'known_encodings/' + os.path.splitext(image_filename)[0] + '.npy'
+
+    if os.path.exists(encoding_filepath):
+        with open(encoding_filepath) as encoding_file:
+            face_encoding = np.load(encoding_file)
+
+        logging.info("Loaded saved encoding for {}".format(filename.split('.')[0]))
+        return face_encoding
+
+    face_image = face_recognition.load_image_file(image_filepath)
+    face_encoding = face_recognition.face_encodings(face_image)[0]
+    logging.info("Created encoding for {}".format(filename.split('.')[0]))
+
+    with open(encoding_filepath, 'w') as encoding_file:
+        np.save(encoding_file, face_encoding)
+    logging.info("Saved encoding for {}".format(filename.split('.')[0]))
+
+    return face_encoding
+
+
 camera = picamera.PiCamera()
 camera.resolution = (320, 240)
 camera.vflip = True
@@ -32,11 +55,8 @@ known_faces = []
 
 logging.info("Loading known face image(s)")
 for filename in os.listdir('known_faces'):
-    filepath = 'known_faces/' + filename
-    face_image = face_recognition.load_image_file(filepath)
     known_faces_names.append(filename.split('.')[0])
-    known_faces.append(face_recognition.face_encodings(face_image)[0])
-    logging.info("Loaded {}".format(filename.split('.')[0]))
+    known_faces.append(get_or_create_face_encoding(filename))
 
 
 while True:

@@ -27,18 +27,22 @@ def get_or_create_face_encoding(image_filename):
     image_filepath = 'known_faces/' + image_filename
     encoding_filepath = 'known_encodings/' + os.path.splitext(image_filename)[0] + '.npy'
 
+    face_encoding = None
     if os.path.exists(encoding_filepath):
-        face_encoding = np.load(encoding_filepath)
+        try:
+            face_encoding = np.load(encoding_filepath)
+            logging.info("Loaded saved encoding for {}".format(filename.split('.')[0]))
+        except OSError:
+            logging.info("Saved encoding for {} is broken".format(filename.split('.')[0]))
+            os.remove(encoding_filepath)
 
-        logging.info("Loaded saved encoding for {}".format(filename.split('.')[0]))
-        return face_encoding
+    if not face_encoding:
+        face_image = face_recognition.load_image_file(image_filepath)
+        face_encoding = face_recognition.face_encodings(face_image)[0]
+        logging.info("Created encoding for {}".format(filename.split('.')[0]))
 
-    face_image = face_recognition.load_image_file(image_filepath)
-    face_encoding = face_recognition.face_encodings(face_image)[0]
-    logging.info("Created encoding for {}".format(filename.split('.')[0]))
-
-    np.save(encoding_filepath, face_encoding)
-    logging.info("Saved encoding for {}".format(filename.split('.')[0]))
+        np.save(encoding_filepath, face_encoding)
+        logging.info("Saved encoding for {}".format(filename.split('.')[0]))
 
     return face_encoding
 

@@ -49,10 +49,10 @@ def get_or_create_face_encoding(image_filename):
     return face_encoding
 
 
-camera = picamera.PiCamera()
-camera.resolution = (320, 240)
-camera.framerate = 30
-camera.vflip = True
+# camera = picamera.PiCamera()
+# camera.resolution = (320, 240)
+# camera.framerate = 30
+# camera.vflip = True
 # output = np.empty((240, 320, 3), dtype=np.uint8)
 
 known_faces_names = []
@@ -111,7 +111,6 @@ class ImageProcessor(threading.Thread):
 
                     for face_encoding in face_encodings:
                         matches = face_recognition.compare_faces(known_faces, face_encoding)
-                        name = "<Unknown Person>"
 
                         if True in matches:
                             first_match_index = matches.index(True)

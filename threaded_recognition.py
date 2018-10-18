@@ -1,88 +1,101 @@
-# author:    Adrian Rosebrock
-# website:   http://www.pyimagesearch.com
+import logging
+import os
 
-# USAGE
-# BE SURE TO INSTALL 'imutils' PRIOR TO EXECUTING THIS COMMAND
-# python picamera_fps_demo.py
-# python picamera_fps_demo.py --display 1
-
-# import the necessary packages
-from __future__ import print_function
+import requests
+import numpy as np
+import face_recognition
 from imutils.video import VideoStream
 from imutils.video import FPS
 from picamera.array import PiRGBArray
 from picamera import PiCamera
-import argparse
 import imutils
 import time
 
+DOOR_URL = 'http://door.gowombat.team/open/'
 
-# construct the argument parse and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-n", "--num-frames", type=int, default=100,
-                help="# of frames to loop over for FPS test")
-args = vars(ap.parse_args())
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
+
+
+def open_door():
+    r = requests.post(DOOR_URL)
+    if r.status_code == 200:
+        door_opened = r.json()['success']
+        if door_opened:
+            time.sleep(5)
+
+    time.sleep(1)
+
+
+def get_or_create_face_encoding(image_filename):
+    image_filepath = 'known_faces/' + image_filename
+    encoding_filepath = 'known_encodings/' + os.path.splitext(image_filename)[0] + '.npy'
+
+    face_encoding = None
+    if os.path.exists(encoding_filepath):
+        try:
+            face_encoding = np.load(encoding_filepath)
+            logging.info("Loaded saved encoding for {}".format(image_filename.split('.')[0]))
+        except OSError:
+            logging.info("Saved encoding for {} is broken".format(image_filename.split('.')[0]))
+            os.remove(encoding_filepath)
+
+    if face_encoding is None:
+        face_image = face_recognition.load_image_file(image_filepath)
+        face_encoding = face_recognition.face_encodings(face_image)[0]
+        logging.info("Created encoding for {}".format(image_filename.split('.')[0]))
+
+        np.save(encoding_filepath, face_encoding)
+        logging.info("Saved encoding for {}".format(image_filename.split('.')[0]))
+
+    return face_encoding
+
+
 
 # initialize the camera and stream
 camera = PiCamera()
 camera.resolution = (320, 240)
 camera.framerate = 32
+camera.vflip = True
 rawCapture = PiRGBArray(camera, size=(320, 240))
 stream = camera.capture_continuous(rawCapture, format="bgr",
                                    use_video_port=True)
 
-# allow the camera to warmup and start the FPS counter
-print("[INFO] sampling frames from `picamera` module...")
-time.sleep(2.0)
-fps = FPS().start()
 
-# loop over some frames
-for (i, f) in enumerate(stream):
-    # grab the frame from the stream and resize it to have a maximum
-    # width of 400 pixels
-    frame = f.array
-    frame = imutils.resize(frame, width=400)
+known_faces_names = []
+known_faces = []
 
-    # clear the stream in preparation for the next frame and update
-    # the FPS counter
-    rawCapture.truncate(0)
-    fps.update()
+logging.info("Loading known face image(s)")
+for filename in os.listdir('known_faces'):
+    known_faces_names.append(filename.split('.')[0])
+    known_faces.append(get_or_create_face_encoding(filename))
 
-    # check to see if the desired number of frames have been reached
-    if i == args["num_frames"]:
-        break
 
-# stop the timer and display FPS information
-fps.stop()
-print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
-print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
-
-# do a bit of cleanup
-stream.close()
-rawCapture.close()
-camera.close()
-
-# created a *threaded *video stream, allow the camera sensor to warmup,
-# and start the FPS counter
-print("[INFO] sampling THREADED frames from `picamera` module...")
 vs = VideoStream(usePiCamera=True).start()
 time.sleep(2.0)
+
 fps = FPS().start()
-
-# loop over some frames...this time using the threaded stream
-while fps._numFrames < args["num_frames"]:
-    # grab the frame from the threaded video stream and resize it
-    # to have a maximum width of 400 pixels
+while True:
     frame = vs.read()
-    frame = imutils.resize(frame, width=400)
 
-    # update the FPS counter
+    face_locations = face_recognition.face_locations(frame)
+    logging.info("Found {} faces in image.".format(len(face_locations)))
+    face_encodings = face_recognition.face_encodings(frame, face_locations)
+
+    for face_encoding in face_encodings:
+        matches = face_recognition.compare_faces(known_faces, face_encoding)
+        name = "<Unknown Person>"
+
+        if True in matches:
+            first_match_index = matches.index(True)
+            name = known_faces_names[first_match_index]
+
+            logging.info("Opening door for {}!".format(name))
+            open_door()
+
     fps.update()
-
-# stop the timer and display FPS information
-fps.stop()
-print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
-print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+    logging.info("FPS: {}".format(fps.fps()))
 
 # do a bit of cleanup
 vs.stop()
+fps.stop()

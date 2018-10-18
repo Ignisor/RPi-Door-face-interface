@@ -1,15 +1,11 @@
-import io
-import os
 import logging
-import threading
-
-import face_recognition
-import picamera
-import numpy as np
-import requests
+import os
 import time
 
-from PIL import Image
+import face_recognition
+import numpy as np
+import requests
+from imutils.video import VideoStream
 
 DOOR_URL = 'http://door.gowombat.team/open/'
 
@@ -51,12 +47,6 @@ def get_or_create_face_encoding(image_filename):
     return face_encoding
 
 
-# camera = picamera.PiCamera()
-# camera.resolution = (320, 240)
-# camera.framerate = 30
-# camera.vflip = True
-# output = np.empty((240, 320, 3), dtype=np.uint8)
-
 known_faces_names = []
 known_faces = []
 
@@ -66,23 +56,25 @@ for filename in os.listdir('known_faces'):
     known_faces.append(get_or_create_face_encoding(filename))
 
 
-# while True:
-#     logging.info("Capturing image.")
-#     camera.capture(output, format="rgb")
-#
-#     face_locations = face_recognition.face_locations(output)
-#     logging.info("Found {} faces in image.".format(len(face_locations)))
-#     face_encodings = face_recognition.face_encodings(output, face_locations)
-#
-#     for face_encoding in face_encodings:
-#         matches = face_recognition.compare_faces(known_faces, face_encoding)
-#         name = "<Unknown Person>"
-#
-#         if True in matches:
-#             first_match_index = matches.index(True)
-#             name = known_faces_names[first_match_index]
-#
-#             logging.info("Opening door for {}!".format(name))
-#             open_door()
+vs = VideoStream(usePiCamera=True).start()
+time.sleep(2.0)
 
-# Create a pool of image processors
+while True:
+    frame = vs.read()
+    frame = np.flip(frame, 0)
+
+    face_locations = face_recognition.face_locations(frame)
+    logging.info("Found {} faces in image.".format(len(face_locations)))
+    face_encodings = face_recognition.face_encodings(frame, face_locations)
+
+    for face_encoding in face_encodings:
+        matches = face_recognition.compare_faces(known_faces, face_encoding)
+
+        if True in matches:
+            first_match_index = matches.index(True)
+            name = known_faces_names[first_match_index]
+
+            logging.info("Opening door for {}!".format(name))
+            open_door()
+
+vs.stop()

@@ -62,27 +62,30 @@ time.sleep(2.0)
 
 fps = FPS().start()
 while True:
-    frame = vs.read()
-    frame = np.flip(frame, 0)
+    try:
+        frame = vs.read()
+        frame = np.flip(frame, 0)
 
-    face_locations = face_recognition.face_locations(frame)
-    logging.info("Found {} faces in image.".format(len(face_locations)))
-    face_encodings = face_recognition.face_encodings(frame, face_locations)
+        face_locations = face_recognition.face_locations(frame)
+        logging.info("Found {} faces in image.".format(len(face_locations)))
+        face_encodings = face_recognition.face_encodings(frame, face_locations)
 
-    for face_encoding in face_encodings:
-        matches = face_recognition.compare_faces(known_faces, face_encoding)
-        name = "<Unknown Person>"
+        for face_encoding in face_encodings:
+            matches = face_recognition.compare_faces(known_faces, face_encoding)
+            name = "<Unknown Person>"
 
-        if True in matches:
-            first_match_index = matches.index(True)
-            name = known_faces_names[first_match_index]
+            if True in matches:
+                first_match_index = matches.index(True)
+                name = known_faces_names[first_match_index]
 
-            logging.info("Opening door for {}!".format(name))
-            open_door()
+                logging.info("Opening door for {}!".format(name))
+                open_door()
 
-    fps.update()
-    logging.info("FPS: {}".format(fps.fps()))
+        fps.update()
+    except KeyboardInterrupt:
+        break
 
-# do a bit of cleanup
-vs.stop()
 fps.stop()
+vs.stop()
+
+logging.info("FPS: {}".format(fps.fps()))

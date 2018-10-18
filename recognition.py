@@ -9,6 +9,8 @@ import numpy as np
 import requests
 import time
 
+from PIL import Image
+
 DOOR_URL = 'http://door.gowombat.team/open/'
 
 
@@ -103,7 +105,8 @@ class ImageProcessor(threading.Thread):
             if self.event.wait(1):
                 try:
                     self.stream.seek(0)
-                    output = np.asarray(bytearray(self.stream.read()), dtype=np.uint8)
+                    img = Image.open(self.stream)
+                    output = np.array(img.getdata(), np.uint8).reshape(img.size[1], img.size[0], 3)
 
                     face_locations = face_recognition.face_locations(output)
                     logging.info("Found {} faces in image.".format(len(face_locations)))

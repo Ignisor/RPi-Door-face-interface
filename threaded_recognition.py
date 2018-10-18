@@ -1,15 +1,12 @@
 import logging
 import os
-
-import requests
-import numpy as np
-import face_recognition
-from imutils.video import VideoStream
-from imutils.video import FPS
-from picamera.array import PiRGBArray
-from picamera import PiCamera
-import imutils
 import time
+
+import face_recognition
+import numpy as np
+import requests
+from imutils.video import FPS
+from imutils.video import VideoStream
 
 DOOR_URL = 'http://door.gowombat.team/open/'
 
@@ -51,17 +48,6 @@ def get_or_create_face_encoding(image_filename):
     return face_encoding
 
 
-
-# initialize the camera and stream
-camera = PiCamera()
-camera.resolution = (320, 240)
-camera.framerate = 32
-camera.vflip = True
-rawCapture = PiRGBArray(camera, size=(320, 240))
-stream = camera.capture_continuous(rawCapture, format="bgr",
-                                   use_video_port=True)
-
-
 known_faces_names = []
 known_faces = []
 
@@ -77,6 +63,7 @@ time.sleep(2.0)
 fps = FPS().start()
 while True:
     frame = vs.read()
+    frame = np.flip(frame, 0)
 
     face_locations = face_recognition.face_locations(frame)
     logging.info("Found {} faces in image.".format(len(face_locations)))
